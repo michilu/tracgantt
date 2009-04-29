@@ -11,7 +11,7 @@ setup (
 
         #install_requires = ['trac>=0.9'],
         #entry_points = {'trac.plugins': ['module_name = gantt']},
-        
+
         author = "Will Barton",
         author_email = "wbb4@opendarwin.org",
         description = "This is a Gantt-Chart creation plugin for Trac.",

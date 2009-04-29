@@ -2,7 +2,7 @@
 .gantt td, .gantt td.active, .gantt td.open { padding: 0.2em 0.1em; }
 
 .gantt td a { width: 100%; display: block; border: 0; }
-.gantt td.open a { background: transparent; border-color: #eed; color: #eed; 
+.gantt td.open a { background: transparent; border-color: #eed; color: #eed;
 	font-style: italic;  text-align: right;
 	border-top: 0; border-left: 0; border-right: 0;
 	}

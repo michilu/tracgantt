@@ -35,11 +35,9 @@
 		</tr>
 	<?cs /each ?>
 	</table>
-	
-	
+
 <?cs else ?>
 	<h1><?cs var:gantt.title ?> Gantt Chart</h1>
-	
 
 	<table class="listing tickets">
 	<thead>
@@ -89,7 +87,7 @@
 	<?cs /each ?>
 	</table>
 
-	<?cs if $gantt.broken_no > 0 ?>	
+	<?cs if $gantt.broken_no > 0 ?>
 		<p><b>WARNING</b>: The following tickets had errors that prevented them from being included in the gantt chart:</p>
 		<ul>
 		<?cs each ticket = gantt.broken ?>
@@ -101,6 +99,7 @@
 		</ul>
 	<?cs /if ?>
 <?cs /if ?>
- 
+
 </div>
 <?cs include "footer.cs" ?>
+

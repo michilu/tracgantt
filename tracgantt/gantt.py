@@ -2,19 +2,19 @@
 # All rights reserved.
 #
 # Author: Will Barton <wbb4@opendarwin.org>
-# 
-# Redistribution and use in source and binary forms, with or without 
+#
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
-#   1. Redistributions of source code must retain the above copyright 
+#
+#   1. Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-#   2. Redistributions in binary form must reproduce the above copyright 
-#      notice, this list of conditions and the following disclaimer in the 
+#   2. Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
 #      documentation and/or other materials provided with the distribution.
 #   3. The name of the author may not be used to endorse or promote products
 #      derived from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
 # INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 # AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -27,10 +27,13 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Standard Python modules
-import re, datetime, time
-import tempfile, os
-import sys, traceback
-
+import datetime
+import os
+import re
+import sys
+import tempfile
+import time
+import traceback
 
 # Trac
 from trac import util
@@ -51,7 +54,7 @@ class GanttComponent(Component):
     def get_active_navigation_item(self, req):
         return 'gantt'
     def get_navigation_items(self, req):
-        yield ('mainnav', 'gantt', 
+        yield ('mainnav', 'gantt',
             util.Markup('<a href="%s">Gantt Charts</a>' \
                                        % self.env.href.gantt()))
 
@@ -62,7 +65,6 @@ class GanttComponent(Component):
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
-
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -85,15 +87,15 @@ class GanttComponent(Component):
 
         id = int(req.args.get('id', -1))
         action = req.args.get('action', 'list')
-        
+
         db = self.env.get_db_cnx()
 
         if id == -1:
             title = 'Available Charts'
             description = 'This is a list of charts available.'
-            
+
             cols,rows = self._reports(db)
-            
+
             req.hdf['gantt.id'] = -1
             req.hdf['title'] = title
             req.hdf['description'] = description
@@ -105,7 +107,7 @@ class GanttComponent(Component):
             add_link(req, 'up', self.env.href.gantt(), 'Available Charts')
             report = self._report_for_id(db, id)
 
-            if report['id'] > 0: 
+            if report['id'] > 0:
                 report['title'] = '{%i} %s' % (report['id'], report['title'])
 
             req.hdf['title'] = report['title']
@@ -124,7 +126,6 @@ class GanttComponent(Component):
             req.hdf['gantt.broken_no'] = len(broken)
             req.hdf['gantt.show_opened'] = show_opened
 
-
         add_stylesheet(req, 'gantt/gantt.css')
         return 'gantt.cs', None
 
@@ -135,7 +136,7 @@ class GanttComponent(Component):
         info = cursor.fetchall() or []
         cols = [s[0] for s in cursor.description or []]
         db.rollback()
-        rows = [{'report':i[0], 'title':i[1], 
+        rows = [{'report':i[0], 'title':i[1],
                 'href':self.env.href.gantt(i[0])} for i in info]
         return cols, rows
 
@@ -152,10 +153,10 @@ class GanttComponent(Component):
         else:
             cursor.execute("SELECT title,sql,description from report " \
                     + "WHERE id=%s", (id,))
- 
+
         row = cursor.fetchone()
         if not row:
-            raise util.TracError('Report %d does not exist.' % id, 
+            raise util.TracError('Report %d does not exist.' % id,
                 'Invalid Report Number')
         title = row[0] or ''
         query = row[1]
@@ -198,7 +199,7 @@ class GanttComponent(Component):
 
         ## Now process the results
 
-        # Add ticket objects to each row in the query result, 
+        # Add ticket objects to each row in the query result,
         # Note: fetchall() returns a list of tuples, so we have to
         # convert those tuples to lists
         # XXX: the cols bit sucks.
@@ -206,7 +207,7 @@ class GanttComponent(Component):
 
         # Create a dict from that list with ticket.id as the keys
         tdict = {}
-        map(lambda t : tdict.setdefault(t.id, t), 
+        map(lambda t : tdict.setdefault(t.id, t),
                 filter(ticket_in_gantt, tlist))
 
         show_opened = self.env.config.getbool('gantt-charts',
@@ -217,9 +218,9 @@ class GanttComponent(Component):
 
             # If we get a KeyError, the ticket is not in tdict, because
             # it is not checked to include in gantt charts.
-            try: 
+            try:
                 ticket = tdict[row[cols.index('ticket')]]
-            except KeyError: 
+            except KeyError:
                 continue
 
             try:
@@ -228,7 +229,7 @@ class GanttComponent(Component):
                 # consideration dependencies times.)
                 start,end,open,changed = \
                         self._dates_for_ticket(ticket, tdict)
-                
+
                 # Limit the summary to the max characters configured, or
                 # 16 chars in the gantt chart display.  We expose the
                 # full summary to the template, but it's not currently
@@ -246,7 +247,7 @@ class GanttComponent(Component):
                     shortsum = "%s..." % summary[:16]
                 else:
                     shortsum = summary
-                
+
                 tickets.append(
                         {'id': ticket.id,
                          'summary':summary,
@@ -258,10 +259,10 @@ class GanttComponent(Component):
                          'changed': changed.toordinal(),
                          'color': row[cols.index("__color__")]
                          })
-                       
+
                 if start not in dates: dates.append(start)
                 if end not in dates: dates.append(end)
-                if open not in dates and show_opened: 
+                if open not in dates and show_opened:
                     dates.append(open)
 
             except Exception, e:
@@ -286,12 +287,12 @@ class GanttComponent(Component):
         # tickets list.
         dlist = [d['ord'] for d in dates]
         map(lambda t : \
-                t.setdefault('span', 
+                t.setdefault('span',
                         1 + dlist.index(t['end']) - dlist.index(t['start'])),
             tickets)
         if show_opened:
             map(lambda t : \
-                    t.setdefault('ospan', dlist.index(t['start']) 
+                    t.setdefault('ospan', dlist.index(t['start'])
                                 - dlist.index(t['open'])),
                 tickets)
 
@@ -309,7 +310,7 @@ class GanttComponent(Component):
                 time.mktime(time.strptime(s,f)))
         date_from_date_by_num = lambda n,s : \
             datetime.date.fromordinal(s.toordinal() + int(n))
- 
+
         depends = ticket.values.get('dependencies')
 
         # Get the start date, if there is one, otherwise we'll find it
@@ -317,7 +318,7 @@ class GanttComponent(Component):
         start_s = ticket.values.get('due_assign')
         if start_s:
             start = date_for_string(start_s, date_format)
-        else: 
+        else:
             start = None
 
         # Cycle through the depends values, and set the start date
@@ -340,7 +341,7 @@ class GanttComponent(Component):
         # Unless explicitly disabled in the config file, use the
         # creation date as the start date for this ticket.
         if not start:
-            use_cdate = self.env.config.getbool("gantt-charts", 
+            use_cdate = self.env.config.getbool("gantt-charts",
                     "use_creation_date", "true")
 
             if use_cdate:
@@ -351,12 +352,12 @@ class GanttComponent(Component):
         due_s = ticket.values.get('due_close')
         if not due_s:
             raise ValueError, "due date required for inclusion"
-        
+
         # due_close can either be an integer for number of days from
         # the start, or an actual date matching our format.  Try the
         # date first, then if we get a value error (it doesn't match
         # the format), try it as an integer
-        try: 
+        try:
             due = date_for_string(due_s, date_format)
         except ValueError, e:
             due = date_from_date_by_num(due_s, start)
@@ -375,6 +376,6 @@ class GanttComponent(Component):
 
         return (start, due, open, changed)
 
-
     def _paginate_tickets(self, tickets, dates):
         return tickets, dates
+
