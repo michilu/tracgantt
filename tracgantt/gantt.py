@@ -371,8 +371,8 @@ class GanttComponent(Component):
                     % (str(ticket.id), str(start), str(due))
 
         # Finally the ticket itself's open and close dates
-        open = datetime.date.fromtimestamp(ticket.time_created)
-        changed = datetime.date.fromtimestamp(ticket.time_changed)
+        open = ticket.time_created.date()
+        changed = ticket.time_changed.date()
 
         return (start, due, open, changed)
 
