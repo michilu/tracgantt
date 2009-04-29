@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup (
         name = "TracGantt",
-        version = "0.3.2a",
+        version = "0.3.3",
         packages = ['tracgantt'],
         package_data={'tracgantt': ['templates/*.cs', 'htdocs/*.css']},
 
