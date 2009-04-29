@@ -1,0 +1,30 @@
+
+.gantt td, .gantt td.active, .gantt td.open { padding: 0.2em 0.1em; }
+
+.gantt td a { width: 100%; display: block; border: 0; }
+.gantt td.open a { background: transparent; border-color: #eed; color: #eed; 
+	font-style: italic;  text-align: right;
+	border-top: 0; border-left: 0; border-right: 0;
+	}
+.gantt td.open a:hover { background: transparent; color: #eed; }
+
+.gantt a.color1 { background: #fdc; color: #a22;
+	border: 1px solid #e88;  border-bottom: 5px solid #e88; }
+.gantt a.color2 { background: #ffb; color: #880;
+	border: 1px solid #eea;  border-bottom: 5px solid #eea; }
+.gantt a.color3 { background: #fbfbfb; color: #444; 
+	border: 1px solid #ddd;  border-bottom: 5px solid #ddd; }
+.gantt a.color4 { background: #e7ffff; color: #099;
+	border: 1px solid #cee;  border-bottom: 5px solid #cee; }
+.gantt a.color5 { background: #e7eeff; color: #469;
+	border: 1px solid #cde;  border-bottom: 5px solid #cde; }
+.gantt a.color6 { background: #f0f0f0; color: #888;
+	border: 1px solid #ddd;  border-bottom: 5px solid #ddd; }
+
+.gantt a.color1:hover { background: #fdc; color: #a22 }
+.gantt a.color2:hover { background: #ffb; color: #880 }
+.gantt a.color3:hover { background: #fbfbfb; color: #444 }
+.gantt a.color4:hover { background: #e7ffff; color: #099 }
+.gantt a.color5:hover { background: #e7eeff; color: #469 }
+.gantt a.color6:hover { background: #f0f0f0; color: #888 }
+
