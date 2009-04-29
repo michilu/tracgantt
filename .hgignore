@@ -1,0 +1,12 @@
+TracGantt.egg-info
+build
+dist
+tags
+
+syntax: glob
+*.pyc
+*.swp
+.DS_Store
+
+syntax: regexp
+
