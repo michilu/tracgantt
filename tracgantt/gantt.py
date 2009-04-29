@@ -27,6 +27,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Standard Python modules
+from StringIO import StringIO
 import datetime
 import os
 import re
@@ -105,7 +106,8 @@ class GanttComponent(Component):
             add_stylesheet(req, 'common/css/report.css')
         else:
             add_link(req, 'up', self.env.href.gantt(), 'Available Charts')
-            report = self._report_for_id(db, id)
+            args = self.get_var_args(req)
+            report = self._report_for_id(req, db, id, args)
 
             if report['id'] > 0:
                 report['title'] = '{%i} %s' % (report['id'], report['title'])
@@ -117,7 +119,7 @@ class GanttComponent(Component):
             show_opened = self.env.config.getbool('gantt-charts',
                     'show_opened', 'false')
 
-            tickets,dates,broken = self._tickets_for_report(db, report['query'])
+            tickets,dates,broken = self._tickets_for_report(db, report['query'], report['args'])
             tickets,dates = self._paginate_tickets(tickets, dates)
 
             req.hdf['gantt.tickets'] = tickets
@@ -140,7 +142,7 @@ class GanttComponent(Component):
                 'href':self.env.href.gantt(i[0])} for i in info]
         return cols, rows
 
-    def _report_for_id(self, db, id):
+    def _report_for_id(self, req, db, id, args):
         cursor = db.cursor()
 
         # The 'sql' column changed to 'query' in 0.10, so we want to
@@ -159,12 +161,15 @@ class GanttComponent(Component):
             raise util.TracError('Report %d does not exist.' % id,
                 'Invalid Report Number')
         title = row[0] or ''
-        query = row[1]
+        sql = row[1]
+        print sql, args
+        query, args = self.sql_sub_vars(req, sql, args, db)
+        print query, args
         description = row[2] or ''
 
-        return {'id':id, 'title':title, 'query':query, 'description':description}
+        return {'id':id, 'title':title, 'query':query, 'args':args, 'description':description}
 
-    def _tickets_for_report(self, db, query):
+    def _tickets_for_report(self, db, query, args):
         """ Get a list of Ticket instances for the tickets in a report """
 
         tickets = []
@@ -173,7 +178,7 @@ class GanttComponent(Component):
 
         ## Get tickets for this report
         cursor = db.cursor()
-        cursor.execute(query)
+        cursor.execute(query, args)
         info = cursor.fetchall() or []
         cols = [s[0] for s in cursor.description or []]
         db.rollback()
@@ -257,6 +262,7 @@ class GanttComponent(Component):
                          'end': end.toordinal(),
                          'open': open.toordinal(),
                          'changed': changed.toordinal(),
+                         'style': row[cols.index("__style__")],
                          'color': row[cols.index("__color__")]
                          })
 
@@ -378,4 +384,60 @@ class GanttComponent(Component):
 
     def _paginate_tickets(self, tickets, dates):
         return tickets, dates
+
+    def sql_sub_vars(self, req, sql, args, db=None):
+        if db is None:
+            db = self.env.get_db_cnx()
+        values = []
+        def add_value(aname):
+            try:
+                arg = args[aname]
+            except KeyError:
+                raise TracError("Dynamic variable '$%s' not defined." \
+                                % aname)
+            req.hdf['report.var.' + aname] = arg
+            values.append(arg)
+
+        var_re = re.compile("[$]([A-Z]+)")
+
+        # simple parameter substitution outside literal
+        def repl(match):
+            add_value(match.group(1))
+            return '%s'
+
+        # inside a literal break it and concatenate with the parameter
+        def repl_literal(expr):
+            parts = var_re.split(expr[1:-1])
+            if len(parts) == 1:
+                return expr
+            params = parts[1::2]
+            parts = ["'%s'" % p for p in parts]
+            parts[1::2] = ['%s'] * len(params)
+            for param in params:
+                add_value(param)
+            return db.concat(*parts)
+
+        sql_io = StringIO()
+
+        # break SQL into literals and non-literals to handle replacing
+        # variables within them with query parameters
+        for expr in re.split("('(?:[^']|(?:''))*')", sql):
+            if expr.startswith("'"):
+                sql_io.write(repl_literal(expr))
+            else:
+                sql_io.write(var_re.sub(repl, expr))
+        return sql_io.getvalue(), values
+
+    def get_var_args(self, req):
+        report_args = {}
+        for arg in req.args.keys():
+            if not arg.isupper():
+                continue
+            report_args[arg] = req.args.get(arg)
+
+        # Set some default dynamic variables
+        if not report_args.has_key('USER'):
+            report_args['USER'] = req.authname
+
+        return report_args
 
